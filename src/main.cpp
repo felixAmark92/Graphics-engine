@@ -1,12 +1,13 @@
 #include <iostream>
-
-#include "glad/glad.h"
-#include "glfw3.h"
+#include <glad/glad.h>
+#include <glfw3.h>
 #include "shader.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb_image.h>
 
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -20,7 +21,6 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
     }
 }
-
 
 int main() {
 
@@ -68,11 +68,6 @@ int main() {
             1.0f, 0.0f,
             0.5f, 1.0f
     };
-
-
-
-
-
 
     unsigned int indices[] = {
             0, 1, 3,
@@ -124,6 +119,8 @@ int main() {
     glEnableVertexAttribArray(2);
 
 
+
+
     //Texture handling
     unsigned int texture1;
     unsigned int texture2;
@@ -168,7 +165,7 @@ int main() {
     data = stbi_load("../textures/awesomeface.png", &width, &height, &nrChannels, 0);
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -177,25 +174,43 @@ int main() {
     }
     stbi_image_free(data);
 
-    float xOffset = 0;
-    bool boap = false;
-
     ourShader.use();
     ourShader.setInt("texture1", 0);
     ourShader.setInt("texture2", 1);
+
+    float visibility = 0.5f;
+    ourShader.setFloat("textureVisibility", visibility);
 
     while (!glfwWindowShouldClose(window))
     {
         //input
         processInput(window);
 
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS &&
+            visibility < 1)
+        {
+            visibility += 0.004;
+        }
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS &&
+            visibility > 0)
+        {
+            visibility -= 0.004;
+        }
+
+        //transform
+
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0.0));
+        trans = glm::rotate(trans, (float)(glfwGetTime()), glm::vec3(0.0f,0.0f, 1.0f));
+
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID,"transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
         //rendering
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-
-
-        ourShader.setFloat("xOffset", xOffset);
+        ourShader.setFloat("textureVisibility", visibility);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
@@ -205,23 +220,6 @@ int main() {
         ourShader.use();
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-        if (!boap)
-        {
-            xOffset += 0.01;
-        }
-        else
-        {
-            xOffset -= 0.01;
-        }
-        if (xOffset >= 1.0f)
-        {
-            boap = true;
-        }
-        else if (xOffset <= -1.0f)
-        {
-            boap = false;
-        }
 
         // check and call events and swap the buffers
         glfwSwapBuffers(window);
