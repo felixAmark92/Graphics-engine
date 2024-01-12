@@ -21,6 +21,8 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
     }
 }
+const int width = 1920;
+const int height = 1080;
 
 int main() {
 
@@ -32,7 +34,7 @@ int main() {
         return 0;
     }
 
-    window = glfwCreateWindow(640, 480, "Gucci gang", nullptr, nullptr);
+    window = glfwCreateWindow(width, height, "Gucci gang", nullptr, nullptr);
 
     if (!window)
     {
@@ -47,7 +49,7 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
     }
 
-    glViewport(0, 0, 640, 480);
+    glViewport(0, 0, width, height);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -151,14 +153,12 @@ int main() {
             glm::vec3(-1.3f, 1.0f, -1.5f)
     };
 
-    glm::mat4 model = glm::mat4 (1.0f);
-
 
     glm::mat4  view = glm::mat4 (1.0f);
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
     glm::mat4 projection;
-    projection = glm::perspective(glm::radians(45.0f), 640.0f / 480.0f, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 
 
     //Texture handling
@@ -202,7 +202,7 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    data = stbi_load("../textures/awesomeface.png", &width, &height, &nrChannels, 0);
+    data = stbi_load("../textures/me2.png", &width, &height, &nrChannels, 0);
     if (data)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -271,13 +271,8 @@ int main() {
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        model = glm::rotate(model, glm::radians(0.5f), glm::vec3(1.0f, 1.0f, 0.3f));
-
-
         ourShader.setMatrix("projection", projection);
         ourShader.setMatrix("view", view);
-
-
 
         // check and call events and swap the buffers
         glfwSwapBuffers(window);
