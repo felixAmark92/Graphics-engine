@@ -24,6 +24,7 @@ void processInput(GLFWwindow *window)
 
 int main() {
 
+    //glfw initialization
     GLFWwindow* window;
 
     if (!glfwInit())
@@ -118,7 +119,16 @@ int main() {
             (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
+    //transforms //not sure if it should be here but let try it
 
+    glm::mat4 model = glm::mat4 (1.0f);
+    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+    glm::mat4  view = glm::mat4 (1.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+    glm::mat4 projection;
+    projection = glm::perspective(glm::radians(45.0f), 640.0f / 480.0f, 0.1f, 100.0f);
 
 
     //Texture handling
@@ -199,12 +209,9 @@ int main() {
 
         //transform
 
-        glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0.0));
-        trans = glm::rotate(trans, (float)(glfwGetTime()), glm::vec3(0.0f,0.0f, 1.0f));
-
-        unsigned int transformLoc = glGetUniformLocation(ourShader.ID,"transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        ourShader.setMatrix("model", model);
+        ourShader.setMatrix("projection", projection);
+        ourShader.setMatrix("view", view);
 
         //rendering
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -220,6 +227,7 @@ int main() {
         ourShader.use();
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
 
         // check and call events and swap the buffers
         glfwSwapBuffers(window);
