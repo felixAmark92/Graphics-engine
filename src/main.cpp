@@ -207,7 +207,17 @@ int main() {
     data = stbi_load("../textures/me2.png", &width, &height, &nrChannels, 0);
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGBA,
+                width,
+                height,
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                data);
+
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -221,6 +231,14 @@ int main() {
     ourShader.setInt("texture2", 1);
 
     ourShader.setFloat("textureVisibility", visibility);
+
+
+    //lightning
+
+    glm::vec3 lightColor(0.33f, 0.42f, 0.18f);
+    glm::vec3 toyColor(1.0f, 0.5f, 0.31f);
+    glm::vec3 result = lightColor * toyColor;
+
 
     glEnable(GL_DEPTH_TEST);
 
@@ -254,7 +272,11 @@ int main() {
             model = glm::translate(model, cubePositions[i]);
 
             float angle = glfwGetTime() * 100 - 10 * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, (float)i / 10 ));
+            model = glm::rotate(
+                    model,
+                    glm::radians(angle),
+                    glm::vec3(1.0f, 0.3f, (float)i / 10 ));
+
             ourShader.setMatrix("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
