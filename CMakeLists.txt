@@ -5,7 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(untitled1 src/glad.c src/main.cpp
         src/shader.h
-        src/shader.cpp)
+        src/shader.cpp
+        src/camera.cpp)
 
 target_include_directories(untitled1 PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
