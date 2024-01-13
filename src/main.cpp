@@ -9,20 +9,29 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
+float visibility = 0.2;
 
-void processInput(GLFWwindow *window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
-}
-const int width = 1920;
-const int height = 1080;
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+float yaw =  -90.0f;
+float pitch = 0.0f;
+bool firstMouse = true;
+
+glm::vec3  cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+const int windowWidth = 1920;
+const int windowHeight = 1080;
+
+float lastX = (float)windowWidth / 2;
+float lastY = (float)windowHeight / 2;
+
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void processInput(GLFWwindow *window);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+
 
 int main() {
 
@@ -34,7 +43,7 @@ int main() {
         return 0;
     }
 
-    window = glfwCreateWindow(width, height, "Gucci gang", nullptr, nullptr);
+    window = glfwCreateWindow(windowWidth, windowHeight, "Gucci gang", nullptr, nullptr);
 
     if (!window)
     {
@@ -49,9 +58,14 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
     }
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, windowWidth, windowHeight);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
+
+
 
     //Start of openGl code
 
@@ -98,6 +112,20 @@ int main() {
             -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
     };
 
+
+    glm::vec3 cubePositions[] = {
+            glm::vec3( 0.0f, 0.0f, 0.0f),
+            glm::vec3( 2.0f, 5.0f, -15.0f),
+            glm::vec3(-1.5f, -2.2f, -2.5f),
+            glm::vec3(-3.8f, -2.0f, -12.3f),
+            glm::vec3( 2.4f, -0.4f, 3.5f),
+            glm::vec3(-1.7f, 3.0f, -7.5f),
+            glm::vec3( 1.3f, -2.0f, -2.5f),
+            glm::vec3( 1.5f, 2.0f, 2.5f),
+            glm::vec3( 1.5f, 0.2f, -1.5f),
+            glm::vec3(-1.3f, 1.0f, -1.5f)
+    };
+
     unsigned int indices[] = {
             0, 1, 3,
             1, 2,3
@@ -140,26 +168,19 @@ int main() {
 
     //transforms
 
-    glm::vec3 cubePositions[] = {
-            glm::vec3( 0.0f, 0.0f, 0.0f),
-            glm::vec3( 2.0f, 5.0f, -15.0f),
-            glm::vec3(-1.5f, -2.2f, -2.5f),
-            glm::vec3(-3.8f, -2.0f, -12.3f),
-            glm::vec3( 2.4f, -0.4f, -3.5f),
-            glm::vec3(-1.7f, 3.0f, -7.5f),
-            glm::vec3( 1.3f, -2.0f, -2.5f),
-            glm::vec3( 1.5f, 2.0f, -2.5f),
-            glm::vec3( 1.5f, 0.2f, -1.5f),
-            glm::vec3(-1.3f, 1.0f, -1.5f)
-    };
+
+    //glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+    //glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
 
 
     glm::mat4  view = glm::mat4 (1.0f);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
+                       glm::vec3(0.0f, 0.0f, 0.0f),
+                       glm::vec3(0.0f, 1.0f, 0.0f));
 
     glm::mat4 projection;
-    projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-
+    projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
 
     //Texture handling
     unsigned int texture1;
@@ -218,7 +239,6 @@ int main() {
     ourShader.setInt("texture1", 0);
     ourShader.setInt("texture2", 1);
 
-    float visibility = 0.5f;
     ourShader.setFloat("textureVisibility", visibility);
 
     glEnable(GL_DEPTH_TEST);
@@ -228,22 +248,7 @@ int main() {
         //input
         processInput(window);
 
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS &&
-            visibility < 1)
-        {
-            visibility += 0.004;
-        }
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS &&
-            visibility > 0)
-        {
-            visibility -= 0.004;
-        }
-
-
-
         //rendering
-
-
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -259,6 +264,10 @@ int main() {
         glBindVertexArray(VAO);
 
         //transform
+
+
+
+        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         for (int i = 0; i < 10; ++i)
         {
@@ -277,6 +286,10 @@ int main() {
         // check and call events and swap the buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
     }
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
@@ -284,4 +297,86 @@ int main() {
 
     glfwTerminate();
     return 0;
+}
+//Function implementations
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
+
+    if (firstMouse)
+    {
+        lastX = (float)xpos;
+        lastY = (float)ypos;
+        firstMouse = false;
+    }
+
+    float xOffset = (float)xpos - lastX;
+    float yOffset = lastY - (float)ypos;
+    lastX = xpos;
+    lastY = ypos;
+
+    const float sensitivity = 0.1f;
+    xOffset *= sensitivity;
+    yOffset *= sensitivity;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    if(pitch > 89.0f)
+    {
+        pitch = 89.0f;
+    }
+    if(pitch < -89.0f)
+    {
+        pitch = -89.0f;
+    }
+
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
+}
+
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow *window)
+{
+    const float cameraSpeed = 2.5f * deltaTime;
+
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, true);
+    }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS &&
+        visibility < 1)
+    {
+        visibility += 0.004;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS &&
+        visibility > 0)
+    {
+        visibility -= 0.004;
+    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        cameraPos += cameraSpeed * cameraFront;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        cameraPos -= cameraSpeed * cameraFront;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+
+
 }
